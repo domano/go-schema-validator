@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/tarent/go-log-middleware/logging"
@@ -12,32 +13,40 @@ import (
 )
 
 type validationHandler struct {
-	schema *gojsonschema.Schema
-	next   http.Handler
+	*simpleSchemaStore
+	next http.Handler
 }
 
 func NewValidationHandler(schemaStr string, delegate http.Handler) (*validationHandler, error) {
-	vH := &validationHandler{next: delegate}
-	err := vH.SetSchema(schemaStr)
+	vH := &validationHandler{simpleSchemaStore: NewSimpleSchemaStore(), next: delegate}
+	err := vH.SetSchema("product", schemaStr)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not set schema for new validation handler: ")
 	}
 	return vH, err
 }
 
-func (vH *validationHandler) SetSchema(schemaStr string) error {
+func (vH *validationHandler) SetSchema(name, schemaStr string) error {
 	loader := gojsonschema.NewStringLoader(schemaStr)
 	schema, err := gojsonschema.NewSchema(loader)
 	if err != nil {
 		return errors.Wrap(err, "Could not set json schema for validationhandler ")
 	}
-	vH.schema = schema
+	vH.Insert(name, schema)
 	return nil
 }
 
 func (vH *validationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	jsonLoader, newBody := gojsonschema.NewReaderLoader(r.Body)
-	res, err := vH.schema.Validate(jsonLoader)
+
+	//TODO use gorilla and parse path params here
+	schemaName := strings.ToLower(strings.Replace(r.URL.EscapedPath(), "/", "", -1))
+	schema, exists := vH.Get(schemaName)
+	if !exists {
+		rw.WriteHeader(http.StatusNotFound)
+		return
+	}
+	res, err := schema.Validate(jsonLoader)
 	if err != nil && err != io.EOF {
 		logging.Logger.WithError(err).Error("Could not parse body as json")
 		rw.WriteHeader(http.StatusBadRequest)
