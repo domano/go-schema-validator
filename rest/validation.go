@@ -2,6 +2,7 @@ package rest
 
 import (
 	"bytes"
+	"fmt"
 	"go-schema-validator/store"
 	"io"
 	"io/ioutil"
@@ -49,7 +50,7 @@ func (vH *validationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) 
 		validationErrors := res.Errors()
 		stringBuf := bytes.NewBuffer(make([]byte, 0))
 		for i := range validationErrors {
-			stringBuf.WriteString(validationErrors[i].String())
+			stringBuf.WriteString(fmt.Sprintln(validationErrors[i].String()))
 		}
 		_, err := rw.Write(stringBuf.Bytes())
 		if err != nil {
