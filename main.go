@@ -1,7 +1,11 @@
 package main
 
 import (
+	"go-schema-validator/rest"
+	"go-schema-validator/store"
 	"net/http"
+
+	"github.com/gorilla/mux"
 
 	"github.com/tarent/go-log-middleware/logging"
 )
@@ -27,14 +31,21 @@ var schema = `{
 func main() {
 
 	//TODO: add timeoutstuff here
-	validationServer := &http.Server{Addr: ":9999"}
+	server := &http.Server{Addr: ":9999"}
 
-	validationHandler, err := NewValidationHandler(schema, nil)
-	if err != nil {
-		logging.Logger.WithError(err).Fatal("Could not read intial schema for validationhandler.")
-	}
-	validationServer.Handler = validationHandler
-	err = validationServer.ListenAndServe()
+	// Init schemastore
+	store := store.NewSimpleSchemaStore()
+
+	// Init handlers and mux
+	router := mux.NewRouter()
+	validationHandler := rest.NewValidationHandler(store, nil)
+	schemaHandler := rest.NewSchemaHandler(store, nil)
+
+	router.Handle("/schema/{schemaName}", schemaHandler)
+	router.Handle("/validation/{schemaName}", validationHandler)
+
+	server.Handler = router
+	err := server.ListenAndServe()
 	if err != nil {
 		logging.Logger.WithError(err).Fatal("Could not spin up http server.")
 	}
