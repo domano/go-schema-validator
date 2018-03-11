@@ -3,10 +3,11 @@ package rest
 import (
 	"bytes"
 	"fmt"
-	"go-schema-validator/store"
 	"io"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/domano/go-schema-validator/store"
 
 	"github.com/gorilla/mux"
 	"github.com/xeipuuv/gojsonschema"

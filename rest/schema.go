@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"go-schema-validator/store"
+	"github.com/domano/go-schema-validator/store"
 
 	"github.com/gorilla/mux"
 	"github.com/tarent/go-log-middleware/logging"
@@ -32,7 +32,7 @@ func (sH *schemaHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			return
 		}
 		err = sH.Insert(schemaName, schemaBytes)
-		if err != nil{
+		if err != nil {
 			logging.Logger.WithError(err).Info("Could not save schema in schemahandler")
 			rw.WriteHeader(http.StatusInternalServerError)
 			return

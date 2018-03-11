@@ -1,9 +1,11 @@
 package main
 
 import (
-	"go-schema-validator/rest"
-	"go-schema-validator/store"
 	"net/http"
+
+	"github.com/domano/go-schema-validator/store"
+
+	"github.com/domano/go-schema-validator/rest"
 
 	"github.com/gorilla/mux"
 
